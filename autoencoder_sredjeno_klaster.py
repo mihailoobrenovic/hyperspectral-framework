@@ -168,10 +168,10 @@ class AutoEncoder(object):
         self.costovi = []
         self.validacija=[]
         start_time = time.clock()
-        plt.figure("reconstruction")
+        #plt.figure("reconstruction")
         plt_x_osa = numpy.arange(0,self.n_visible)
         pocetna_vrednost = self.train_set_x[0].eval()
-        self.plot_costovi(plt_x_osa,pocetna_vrednost,"Original","reconstruction")
+        #self.plot_costovi(plt_x_osa,pocetna_vrednost,"Original","reconstruction")
         for epoha in xrange(n_epoha):
             c = []
             print "Epoha ", epoha
@@ -181,7 +181,7 @@ class AutoEncoder(object):
             if epoha%write_each==0:
                 plt_y_osa = funkcija_provere(0)
                 plt_y_osa = plt_y_osa[0][0]
-                self.plot_costovi(plt_x_osa,numpy.transpose(plt_y_osa),epoha,"reconstruction")
+                #self.plot_costovi(plt_x_osa,numpy.transpose(plt_y_osa),epoha,"reconstruction")
            
             avg_cost_epoha =    numpy.mean(c)
             self.costovi.append(avg_cost_epoha)
@@ -191,10 +191,10 @@ class AutoEncoder(object):
             
         end_time = time.clock()   
         print "Gotovo treniranje - ukupno " , end_time - start_time 
-        fig = plt.figure("reconstruction")           
-        plt.legend()
-        plt.title("Reconstruction over time")
-        fig.savefig("reconstruction.png")
+        #fig = plt.figure("reconstruction")           
+        #plt.legend()
+        #plt.title("Reconstruction over time")
+        #fig.savefig("reconstruction.png")
   
     # Funkcija za iscravanje cost-a    
     def plot_cost_over_time(self):

@@ -7,13 +7,13 @@ import scipy
 from scipy import io
 from random import shuffle
 
-class AutoEncoder(object):
+class AutoEncoder0(object):
 
     # Konstruktor klase 
 
     def __init__(self,load_data=True,n_visible=200,n_hidden=100,W=None,bhid=None,bvis=None,dataset='Indian_pines_corrected.mat',labels='Indian_pines_gt.mat',data_name="indian_pines_corrected",label_name="indian_pines_gt"):
         if load_data:            
-            self.train_set_x,self.train_set_y,self.val_set_x,self.val_set_y,self.test_set_x,self.test_set_y = self.load_hyperspectral(dataset,labels,data_name,label_name)
+            self.train_set_x,self.train_set_y,self.val_set_x,self.val_set_y,self.test_set_x,self.test_set_y = self.load_hyperspectral0(dataset,labels,data_name,label_name)
             # Ulazni sloj ima onoliko neurona koliko ima band-ova u slici. Trenig set je organizovan tako da je svaka vrsta jedan piksel
             # pa je broj kolona trening skupa  je jedak broju bandova              
 #            self.n_visible = self.train_set_x.get_value().shape[1]
@@ -69,7 +69,7 @@ class AutoEncoder(object):
         self.b_prime = bvis
         # tied weights, therefore W_prime is W transpose
         self.W_prime = self.W.T
-        self.x = T.fmatrix('x')
+        self.x = T.dmatrix('x')
         self.costovi = []
         self.validacija=[]
         self.epohe=0;
@@ -116,7 +116,7 @@ class AutoEncoder(object):
         self.b_prime = bvis
         # tied weights, therefore W_prime is W transpose
         self.W_prime = self.W.T
-        self.x = T.fmatrix('x')
+        self.x = T.dmatrix('x')
         self.costovi = []
         self.validacija=[]
         self.epohe=0;
@@ -144,8 +144,8 @@ class AutoEncoder(object):
         #lscalar je 64-bit integer
         print "poocinjem"
         self.epohe = n_epoha
-        index = T.iscalar('index')
-        x = T.fmatrix('x')
+        index = T.lscalar('index')
+        x = T.dmatrix('x')
         y = self.get_hidden_values(x)
         z = self.get_reconstructed_input(y)
         L = - T.sum(x * T.log(z) + (1 - x) * T.log(1 - z), axis=1)
@@ -210,8 +210,7 @@ class AutoEncoder(object):
         fig.savefig("cost.png")
         
     # Ucitavanje podataka iz Matlab fajlova    
-    def load_hyperspectral(self,dataset,labels,data_name='indian_pines_corrected',label_name='indian_pines_gt'):
-
+    def load_hyperspectral0(self,dataset,labels,data_name='indian_pines_corrected',label_name='indian_pines_gt'):
 
         slika = scipy.io.loadmat(dataset)
         slika =  slika[data_name]
@@ -220,18 +219,21 @@ class AutoEncoder(object):
         dim1 = slika.shape[0]
         dim2 = slika.shape[1]
         bands = slika.shape[2]
-        total = dim1 * dim2
+        total = sum(sum(labele!=0))
    
-        max_class = numpy.max(labele)+1
+        max_class = numpy.max(labele)
         print "Klasa ima", max_class
         
         mat_lab = numpy.zeros([total,max_class])                
         matrica=numpy.ndarray([total,bands])
         
+        k = 0
         for i in range(0,dim1):
             for j in range(0,dim2):
-                matrica[i*dim2+j] = slika[i,j,:]
-                mat_lab[dim2*i+j,labele[i,j]]=1
+                if (labele[i,j]!=0):
+                    matrica[k] = slika[i,j,:]
+                    mat_lab[k,labele[i,j]-1]=1
+                    k+=1
     
         
         euc_dist = numpy.linalg.norm(matrica,axis=1) 
@@ -303,7 +305,7 @@ class AutoEncoder(object):
     
 # Funkcija za brzo testiranje AE-a, sa podrazumevanim vrednostima
 def start():
-    obj = AutoEncoder()
+    obj = AutoEncoder0()
     obj.train()
     obj.plot_cost_over_time()
 

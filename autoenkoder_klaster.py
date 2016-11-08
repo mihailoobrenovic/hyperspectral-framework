@@ -358,9 +358,9 @@ class AutoEncoder(object):
 #                matrica[i,j]=arr[cnt]
 #                cnt+=1
 
-        slika = scipy.io.loadmat('C:\Users\jecak_000\Desktop\Hyperspectral\Indian_pines_corrected.mat')
+        slika = scipy.io.loadmat('Indian_pines_corrected.mat')
         slika =  slika["indian_pines_corrected"]
-        labele = scipy.io.loadmat('C:\Users\jecak_000\Desktop\Hyperspectral\Indian_pines_gt.mat')
+        labele = scipy.io.loadmat('Indian_pines_gt.mat')
         labele =  labele["indian_pines_gt"]
         
         total = dim1 * dim2
