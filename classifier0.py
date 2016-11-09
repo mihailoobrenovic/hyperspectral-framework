@@ -31,6 +31,7 @@ class Classifier0(object):
             borrow=True
                     )
         if codder :
+            self.autoEncoder = codder
             self.train_set_x,self.train_set_y = self.autoEncoder.get_train_data()
             self.val_set_x,self.val_set_y = self.autoEncoder.get_val_data()
             self.test_set_x,self.test_set_y = self.autoEncoder.get_test_data()

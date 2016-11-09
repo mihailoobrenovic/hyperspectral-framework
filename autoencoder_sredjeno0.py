@@ -302,6 +302,15 @@ class AutoEncoder0(object):
         #z = self.get_reconstructed_input(y)
         return y
         
+    def get_train_set(self):
+        return [self.train_set_x, self.train_set_y]
+
+    def get_val_set(self):
+        return [self.val_set_x, self.val_set_y]
+
+    def get_test_set(self):
+        return [self.test_set_x, self.test_set_y]
+        
     
 # Funkcija za brzo testiranje AE-a, sa podrazumevanim vrednostima
 def start():

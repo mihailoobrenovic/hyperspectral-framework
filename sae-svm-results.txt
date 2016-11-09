@@ -1,0 +1,21 @@
+klas.fit(podaci,labele)
+Out[15]: 
+SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0,
+  decision_function_shape=None, degree=3, gamma=100, kernel='rbf',
+  max_iter=-1, probability=False, random_state=None, shrinking=True,
+  tol=0.001, verbose=False)
+
+klas.score(podaci_val,lab_val)
+Out[16]: 0.74926829268292683
+
+klas.score(podaci,labele)
+Out[17]: 0.80793624979671497
+
+podaci_val, lab_val = sa.get_val_data()
+podaci_val = podaci_val.eval()
+lab_val = lab_val.eval()
+lab_val = lab_val.argmax(axis=1)
+
+
+klas.score(podaci_val,lab_val)
+Out[19]: 0.75804878048780489

@@ -1,0 +1,5 @@
+from stacked_autoencoder0 import StackedAutoEncoder
+from classifier0 import Classifier0
+import matplotlib.pyplot as plt
+
+sa = StackedAutoEncoder(2,200,[40,10])

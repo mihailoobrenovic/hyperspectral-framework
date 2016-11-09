@@ -1,5 +1,6 @@
 from autoencoder_sredjeno0 import AutoEncoder0
 from classifier0 import Classifier0
+import matplotlib.pyplot as plt
 
 obj = AutoEncoder0()
 
@@ -26,3 +27,22 @@ klas.plot_cost_over_time()
 
 print klas.train_confusion
 print klas.valid_confusion
+
+    
+ # Funkcija za iscrtavanje grafika  
+def plot_costovi(x,y,name,fig):
+    plt.figure(fig)
+    plt.plot(x,y,label = name)
+
+
+epohe_x = []
+fig = plt.figure("cost1")
+n_epoha = 2000
+for e in xrange(n_epoha):
+    epohe_x.append(e)
+
+plot_costovi(epohe_x,klas.costovi,"train","cost1")
+plot_costovi(epohe_x,klas.validacija,"validation","cost1")
+plt.legend()
+plt.title("Train and validation cost over time")
+fig.savefig("cost1.png")
