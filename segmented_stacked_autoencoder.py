@@ -8,11 +8,11 @@ class SegmentedStackedAutoEncoder(object):
     
     # Broj epoha i learning_rate moze da se podesava za sbaki sloj u AE-u. Da li to ima smisla?
     # def __init__(self, n_layers=1,n_visible=200,hidden_neurons=[100]):
-    def __init__(self, n_bands=3, length_bands=[35, 69, 96]):
+    def __init__(self, n_bands=3, length_bands=[35, 69, 96], n_hidden=[13, 13, 13], n_features=[6, 7, 7]):
         self.ssaes = []
         self.n_visible = length_bands
-        self.n_hidden = [13, 13, 13]
-        self.n_features = [6, 7, 7]
+        self.n_hidden = n_hidden
+        self.n_features = n_features
 
         [train_sets_X, val_sets_X, test_sets_X, train_sets_Y, val_sets_Y, test_sets_Y] = self.getSplitData(n_bands, length_bands)
         
