@@ -5,6 +5,7 @@ import time
 import matplotlib.pyplot as plt
 import scipy 
 from scipy import io
+import random
 from random import shuffle
 
 class AutoEncoder0(object):
@@ -13,7 +14,8 @@ class AutoEncoder0(object):
 
     def __init__(self,load_data=True,n_visible=200,n_hidden=100,W=None,bhid=None,bvis=None,dataset='Indian_pines_corrected.mat',labels='Indian_pines_gt.mat',data_name="indian_pines_corrected",label_name="indian_pines_gt"):
         if load_data:            
-            self.train_set_x,self.train_set_y,self.val_set_x,self.val_set_y,self.test_set_x,self.test_set_y = self.load_hyperspectral0(dataset,labels,data_name,label_name)
+            #self.train_set_x,self.train_set_y,self.val_set_x,self.val_set_y,self.test_set_x,self.test_set_y = self.load_hyperspectral_oversampling(dataset,labels,data_name,label_name)   #self.load_hyperspectral0(dataset,labels,data_name,label_name)
+            self.train_set_x,self.train_set_y,self.val_set_x,self.val_set_y,self.test_set_x,self.test_set_y = self.load_hyperspectral0(dataset,labels,data_name,label_name)   #self.load_hyperspectral0(dataset,labels,data_name,label_name)
             # Ulazni sloj ima onoliko neurona koliko ima band-ova u slici. Trenig set je organizovan tako da je svaka vrsta jedan piksel
             # pa je broj kolona trening skupa  je jedak broju bandova              
 #            self.n_visible = self.train_set_x.get_value().shape[1]
@@ -185,7 +187,7 @@ class AutoEncoder0(object):
            
             avg_cost_epoha =    numpy.mean(c)
             self.costovi.append(avg_cost_epoha)
-            self.validacija.append(funkcija_validacije())
+           # self.validacija.append(funkcija_validacije())
             print "Cost u epohi ",epoha, " je",avg_cost_epoha
             print "{:10.5f}".format(avg_cost_epoha)
             
@@ -259,6 +261,9 @@ class AutoEncoder0(object):
         train_set_y = mat_lab[:int(total*0.6)]
         val_set_y = mat_lab[int(total*0.6):int(total*0.8)]
         test_set_y  =mat_lab[int(total*0.8):]
+        
+        print type(train_set_x)
+        print type(train_set_y)
        
         return (theano.shared(numpy.asarray(train_set_x,dtype=theano.config.floatX),borrow=True),
                 theano.shared(numpy.asarray(train_set_y,dtype=theano.config.floatX),borrow=True),
@@ -266,6 +271,242 @@ class AutoEncoder0(object):
                 theano.shared(numpy.asarray(val_set_y,dtype=theano.config.floatX),borrow=True),
                 theano.shared(numpy.asarray(test_set_x,dtype=theano.config.floatX),borrow=True),
                 theano.shared(numpy.asarray(test_set_y,dtype=theano.config.floatX),borrow=True))
+
+
+
+    def load_hyperspectral_oversampling(self,dataset,labels,data_name='indian_pines_corrected',label_name='indian_pines_gt'):
+
+        slika = scipy.io.loadmat(dataset)
+        slika =  slika[data_name]
+        labele = scipy.io.loadmat(labels)
+        labele =  labele[label_name]
+        dim1 = slika.shape[0]
+        dim2 = slika.shape[1]
+        bands = slika.shape[2]
+        total = sum(sum(labele!=0))
+   
+        max_class = numpy.max(labele)
+        print "Klasa ima", max_class
+
+        mat_lab = numpy.zeros([total,max_class])                
+        matrica=numpy.ndarray([total,bands])
+        
+        k = 0
+        klase = numpy.zeros([total])
+        for i in range(0,dim1):
+            for j in range(0,dim2):
+                if (labele[i,j]!=0):
+                    matrica[k] = slika[i,j,:]
+                    klase[k] = int(labele[i,j]-1)
+                    mat_lab[k,labele[i,j]-1]=1
+                    k+=1
+    
+        
+        euc_dist = numpy.linalg.norm(matrica,axis=1) 
+        # Na ovaj nacin se svaka vrsta matrice deli sa jednom elementom iz vektora
+        matrica = matrica / euc_dist[:,None]
+        
+        mat = []
+        lab = []
+        k = []
+        index_shuf = range(total)
+        shuffle(index_shuf)
+        for i in index_shuf:
+            mat.append(matrica[i])
+            lab.append(mat_lab[i])
+            k.append(klase[i])
+            
+        matrica = numpy.asarray(mat)
+        mat_lab =numpy.asarray(lab)
+        klase=numpy.asarray(k)
+        
+        val_set_x = matrica[int(total*0.6):int(total*0.8)]
+        test_set_x  =matrica[int(total*0.8):] 
+
+        val_set_y = mat_lab[int(total*0.6):int(total*0.8)]
+        test_set_y  =mat_lab[int(total*0.8):]
+                        
+        matrica = matrica[:int(total*0.6)]
+        mat_lab = mat_lab[:int(total*0.6)]
+        klase = klase[:int(total*0.6)]
+        total = int(total*0.6)
+        najvise_klasa=0
+        najvise_elem=0
+        for k in range(max_class):
+            if (len(numpy.where(klase==k)[0]) > najvise_elem):
+                najvise_elem = len(numpy.where(klase==k)[0])
+                najvise_klasa = k
+        print 'Najvise elementa ima klasa',najvise_klasa ,' i to ', najvise_elem
+        print matrica.shape    
+        for k in range(max_class):
+            if (k != najvise_klasa):
+                ind  =numpy.where(klase==k)[0]
+                br = len(ind)
+                ostatak = najvise_elem - br
+                print "Klasa ",k," ima ", br," elementa, dodajem joj  ",ostatak," elemenata"
+                elementi = matrica[ind]
+                labele = mat_lab[ind]
+                pool = range(br)
+                pom =[]
+                pom_l=[]
+                for i in range(ostatak):
+                    el = random.choice(pool)
+                    pom.append(elementi[el])
+                    pom_l.append(labele[el])
+                total=total+ostatak
+                pom = numpy.asarray(pom)
+                pom_l = numpy.asarray(pom_l)
+                matrica = numpy.vstack([matrica,pom])
+                mat_lab = numpy.vstack([mat_lab,pom_l])
+                print matrica.shape    
+
+
+        # Shuffle dataset
+        mat = []
+        lab = []
+        index_shuf = range(total)
+        shuffle(index_shuf)
+        for i in index_shuf:
+            mat.append(matrica[i])
+            lab.append(mat_lab[i])
+            
+        matrica = mat
+        mat_lab =lab
+        
+        train_set_x = matrica
+        train_set_y = mat_lab
+        
+
+        
+        
+        return (theano.shared(numpy.asarray(train_set_x,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(train_set_y,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(val_set_x,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(val_set_y,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(test_set_x,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(test_set_y,dtype=theano.config.floatX),borrow=True))
+
+
+
+
+
+    # Ucitavanje podataka iz Matlab fajlova    
+    def load_hyperspectral_5_percent(self,dataset,labels,data_name='indian_pines_corrected',label_name='indian_pines_gt'):
+
+        slika = scipy.io.loadmat(dataset)
+        slika =  slika[data_name]
+        labele = scipy.io.loadmat(labels)
+        labele =  labele[label_name]
+        dim1 = slika.shape[0]
+        dim2 = slika.shape[1]
+        bands = slika.shape[2]
+        total = sum(sum(labele!=0))
+   
+        max_class = numpy.max(labele)
+        print "Klasa ima", max_class
+       
+        mat_lab = numpy.zeros([total,max_class])                
+        matrica=numpy.ndarray([total,bands])
+        
+        k = 0
+        klase = numpy.zeros([total])
+        for i in range(0,dim1):
+            for j in range(0,dim2):
+                if (labele[i,j]!=0):
+                    matrica[k] = slika[i,j,:]
+                    klase[k] = int(labele[i,j]-1)
+                    mat_lab[k,labele[i,j]-1]=1
+                    k+=1
+    
+        
+        euc_dist = numpy.linalg.norm(matrica,axis=1) 
+        # Na ovaj nacin se svaka vrsta matrice deli sa jednom elementom iz vektora
+        matrica = matrica / euc_dist[:,None]
+        
+        # Shuffle dataset
+        mat = []
+        lab = []
+        k = []
+        index_shuf = range(total)
+        shuffle(index_shuf)
+        for i in index_shuf:
+            mat.append(matrica[i])
+            lab.append(mat_lab[i])
+            k.append(klase[i])
+            
+        matrica = numpy.asarray(mat)
+        mat_lab = numpy.asarray(lab)
+        klase = numpy.asarray(k)
+        
+        
+        train_set_x = []
+        train_set_y = []
+        test_set_x = []
+        test_set_y = []        
+        val_set_x = []
+        val_set_y = []
+        print klase
+        print " Pocinjem -  duzina train-a je", len(train_set_x)
+        for k in range(max_class):
+            ind = numpy.where(klase==k)[0]
+            duzina = len(ind)
+            procenat = int(duzina*0.05)
+            print 'klasa ',k,' -duzina je', duzina, ' a procenat je ',procenat
+            mat = matrica[ind]
+            lab = mat_lab[ind]
+            for j in range(0,procenat,1):
+                train_set_x.append(mat[j])
+                train_set_y.append(lab[j]) 
+            for j in range(procenat,duzina,1):
+                test_set_x.append(mat[j])
+                test_set_y.append(lab[j])
+           
+    # Shuffle dataset
+        train_x = []
+        train_y = []
+        index_shuf = range(len(train_set_x))
+        shuffle(index_shuf)
+        for i in index_shuf:
+            train_x.append(train_set_x[i])
+            train_y.append(train_set_y[i])
+        
+        train_set_x = train_x
+        train_set_y = train_y
+           
+        test_x = []
+        test_y = []
+        index_shuf = range(len(test_set_x))
+        shuffle(index_shuf)
+        for i in index_shuf:
+            test_x.append(test_set_x[i])
+            test_y.append(test_set_y[i])
+        
+        test_set_x = test_x
+        test_set_y = test_y
+        
+        val_set_x = test_set_x
+        val_set_y = test_set_y 
+      
+        return (theano.shared(numpy.asarray(train_set_x,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(train_set_y,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(val_set_x,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(val_set_y,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(test_set_x,dtype=theano.config.floatX),borrow=True),
+                theano.shared(numpy.asarray(test_set_y,dtype=theano.config.floatX),borrow=True))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     # Vraca matricu tezina izmedju prvog sloja i skrivenog    
     def get_w(self):
@@ -303,15 +544,15 @@ class AutoEncoder0(object):
         return y
         
     def get_train_set(self):
-        return [self.train_set_x, self.train_set_y]
-
-    def get_val_set(self):
-        return [self.val_set_x, self.val_set_y]
-
-    def get_test_set(self):
-        return [self.test_set_x, self.test_set_y]
+        return [self.train_set_x,self.train_set_y]
         
-    
+        
+    def get_val_set(self):
+        return [self.val_set_x,self.val_set_y]
+        
+    def get_test_set(self):
+        return [self.test_set_x,self.test_set_y]        
+    # Vraca rezultat autoencodera-a    
 # Funkcija za brzo testiranje AE-a, sa podrazumevanim vrednostima
 def start():
     obj = AutoEncoder0()
